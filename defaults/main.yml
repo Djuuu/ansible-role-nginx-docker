@@ -1,0 +1,36 @@
+---
+
+# Docker project variables
+
+nginx_project_name: nginx
+
+# Docker project dynamic vars (uses `docker_project_name` prefix, adapt if overriden)
+
+# Traefik router entrypoints
+nginx_traefik_entrypoints: 'http,https'
+# Traefik router middlewares
+nginx_traefik_middlewares:
+  - "https-redirect@file"
+
+# Main service additional docker-compose options (ex: cpu_shares, deploy, ...)
+nginx_compose_service_additional_options: |
+  #ports:
+  #  - 80:80
+  #  - 443:443
+
+
+# Nginx project variables
+
+# linuxserver/nginx image version
+nginx_linuxserver_nginx_version: latest
+
+# Volumes mounted in nginx container
+# note: you should configure virtual hosts as per you apps requirements
+nginx_app_volumes: []
+#  - /home/user/myapp # (will be mounted in /app/myapp)
+#  - src: /home/user/myotherapp
+#    dest: /app/mythirdapp
+
+# Additional external docker-compose networks
+nginx_compose_additional_networks: []
+#  - postgres_default

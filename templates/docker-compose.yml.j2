@@ -1,0 +1,54 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# {{ ansible_managed }}
+# {{ template_fullpath }}
+
+name: {{ docker_project_slug }}
+
+services:
+
+  nginx:
+    container_name: {{ docker_project_slug }}
+    #image: lscr.io/linuxserver/nginx:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        LINUXSERVER_NGINX_VERSION: ${LINUXSERVER_NGINX_VERSION:-{{ nginx_linuxserver_nginx_version }}}
+    pull_policy: build
+    restart: unless-stopped
+
+    {{ docker_project_compose_service_additional_options | indent(4) }}
+
+    networks:
+      - default
+      {% for item in nginx_compose_additional_networks %}
+      - {{ item }}
+      {% endfor %}
+
+    environment:
+      - PUID={{ target_user_uid | default(ansible_user_uid) }}
+      - PGID={{ target_user_gid | default(ansible_user_gid) }}
+      - TZ={{ timezone | default('UTC') }}
+
+    volumes:
+      - ./config:/config
+
+      {% for item in nginx_app_volumes %}
+      - {{ item.src | default(item) }}:{{
+          item.dest | default('/app/' ~ (
+            item.src | default(item) | basename
+          ))
+        }}
+      {% endfor %}
+
+    labels:
+      {{ traefik_project_base_labels | indent(6) }}
+
+networks:
+  {{ docker_project_default_network | indent(2) }}
+  {% for item in nginx_compose_additional_networks %}
+  {{ item }}:
+    external: true
+  {% endfor %}
+
+{{ docker_project_compose_additional_options }}

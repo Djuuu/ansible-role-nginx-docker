@@ -1,0 +1,75 @@
+---
+
+## Init
+
+- name: Ensure project directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ target_user | default(omit) }}"
+    group: "{{ target_group | default(target_user | default(omit)) }}"
+    mode: '0755'
+  loop:
+    - "{{ docker_project_path }}"
+    - "{{ docker_project_path }}/config"
+  tags: ["init"]
+
+## Configure
+
+- name: Copy Dockerfile
+  ansible.builtin.copy:
+    src: Dockerfile
+    dest: "{{ docker_project_path }}/"
+    mode: '0664'
+    owner: "{{ target_user | default(omit) }}"
+    group: "{{ target_group | default(target_user | default(omit)) }}"
+
+- name: Copy default nginx configuration files
+  ansible.builtin.copy:
+    src: nginx
+    dest: "{{ docker_project_path }}/config/"
+    owner: "{{ target_user | default(omit) }}"
+    group: "{{ target_group | default(target_user | default(omit)) }}"
+    directory_mode: '0755'
+    mode:           '0644'
+
+- name: Configure
+  vars:
+    _user_suffix: "{{ ('-' ~ target_user | default('')).rstrip('-') }}"
+    _config_dir: "config/nginx/{{ inventory_hostname }}{{ _user_suffix }}"
+  block:
+
+    - name: "Check for configuration directory: {{ _config_dir }}"
+      delegate_to: localhost
+      ansible.builtin.stat:
+        path: "{{ _config_dir }}"
+      register: _dir_stat
+
+    - name: "Copy configuration files: {{ _config_dir }}"
+      ansible.builtin.copy:
+        src: "{{ _config_dir }}/"
+        dest: "{{ docker_project_path }}/config/"
+        owner: "{{ target_user | default(omit) }}"
+        group: "{{ target_group | default(target_user | default(omit)) }}"
+        directory_mode: '0755'
+        mode:           '0644'
+      when:
+        - _dir_stat.stat.exists
+        - _dir_stat.stat.isdir or _dir_stat.stat.islnk
+      register: _copy
+      notify: Restart nginx
+
+- name: Template docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_project_path }}/docker-compose.yml"
+    owner: "{{ target_user | default(omit) }}"
+    group: "{{ target_group | default(target_user | default(omit)) }}"
+    mode: '0644'
+    validate: "{{ docker_cli }} compose -f %s config"
+    backup: true
+
+## Run
+
+- name: Start app
+  ansible.builtin.include_role: { name: djuuu.docker_project, tasks_from: compose-up }
