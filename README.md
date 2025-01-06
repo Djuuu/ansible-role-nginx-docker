@@ -37,7 +37,7 @@ Available role variables are listed below, along with default values (see `defau
 
 nginx_project_name: nginx
 
-# Docker project dynamic vars (uses `docker_project_name` prefix, adapt if overriden)
+# Docker project dynamic vars (uses `docker_project_name` prefix, adapt if overridden)
 
 # Traefik router entrypoints
 nginx_traefik_entrypoints: 'http,https'
