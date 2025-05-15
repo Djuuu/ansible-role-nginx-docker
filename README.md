@@ -45,8 +45,12 @@ nginx_traefik_entrypoints: 'http,https'
 nginx_traefik_middlewares:
   - "https-redirect@file"
 
+# Additional external docker-compose networks, joined by main service
+nginx_additional_networks: []
+#  - postgres_default
+
 # Main service additional docker-compose options (ex: cpu_shares, deploy, ...)
-nginx_compose_service_additional_options: |
+nginx_service_additional_options: |
   #ports:
   #  - 80:80
   #  - 443:443
@@ -61,10 +65,6 @@ nginx_app_volumes: []
 #  - /home/user/myapp # (will be mounted in /app/myapp)
 #  - src: /home/user/myotherapp
 #    dest: /app/mythirdapp
-
-# Additional external docker-compose networks
-nginx_compose_additional_networks: []
-#  - postgres_default
 ```
 
 Optional target user variables:

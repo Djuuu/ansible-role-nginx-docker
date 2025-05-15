@@ -7,7 +7,6 @@ name: {{ docker_project_slug }}
 services:
 
   nginx:
-    container_name: {{ docker_project_slug }}
     #image: lscr.io/linuxserver/nginx:latest
     build:
       context: .
@@ -15,15 +14,12 @@ services:
       args:
         LINUXSERVER_NGINX_VERSION: ${LINUXSERVER_NGINX_VERSION:-{{ nginx_linuxserver_nginx_version }}}
     pull_policy: build
-    restart: unless-stopped
+    container_name: {{ docker_project_slug }}
+    restart: {{ docker_project_restart }}
 
-    {{ docker_project_compose_service_additional_options | indent(4) }}
+    {{ docker_project_service_network_options | indent(4) }}
 
-    networks:
-      - default
-      {% for item in nginx_compose_additional_networks %}
-      - {{ item }}
-      {% endfor %}
+    {{ docker_project_service_additional_options | indent(4) }}
 
     environment:
       - PUID={{ target_user_uid | default(ansible_user_uid) }}
@@ -44,11 +40,6 @@ services:
     labels:
       {{ traefik_project_base_labels | indent(6) }}
 
-networks:
-  {{ docker_project_default_network | indent(2) }}
-  {% for item in nginx_compose_additional_networks %}
-  {{ item }}:
-    external: true
-  {% endfor %}
+{{ docker_project_networks }}
 
 {{ docker_project_compose_additional_options }}
